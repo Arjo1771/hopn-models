@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Booking View</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f8f8f8;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    .booking-card {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+    }
+
+    .status-select {
+      margin-top: 10px;
+    }
+
+    select {
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>📋 All Booking Requests</h2>
+
+  <div id="bookingContainer">
+    <p>Loading...</p>
+  </div>
+
+  <script>
+    async function fetchBookings() {
+      const res = await fetch('http://127.0.0.1:8000/api/bookings');
+      const bookings = await res.json();
+
+      const container = document.getElementById('bookingContainer');
+      container.innerHTML = "";
+
+      if (bookings.length === 0) {
+        container.innerHTML = "<p>No bookings found.</p>";
+        return;
+      }
+
+      bookings.forEach(b => {
+        const modelName = b.model_profile?.name || 'Unknown Model';
+
+        container.innerHTML += `
+          <div class="booking-card">
+            <strong>📸 Model:</strong> ${modelName}<br>
+            <strong>👤 Client:</strong> ${b.client_name}<br>
+            <strong>📅 Date:</strong> ${b.date}<br>
+            <strong>⏱️ Duration:</strong> ${b.duration}<br>
+            <strong>📝 Notes:</strong> ${b.notes || '-'}<br>
+            <strong>🚦 Status:</strong> <span id="status-${b.id}">${b.status}</span><br>
+            <div class="status-select">
+              <select onchange="updateStatus(${b.id}, this.value)">
+                <option value="">Change Status</option>
+                <option value="approved">Approve</option>
+                <option value="rejected">Reject</option>
+              </select>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    async function updateStatus(bookingId, newStatus) {
+      if (!newStatus) return;
+
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/api/bookings/${bookingId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          document.getElementById(`status-${bookingId}`).textContent = result.status;
+          alert('✅ Status updated');
+        } else {
+          alert('❌ Failed to update: ' + (result.message || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('❌ Connection error');
+      }
+    }
+
+    window.onload = fetchBookings;
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Model Profile</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px auto;
+      max-width: 600px;
+      background-color: #f9f9f9;
+      padding: 20px;
+    }
+
+    .profile-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    .social-link {
+      margin: 5px 0;
+    }
+
+    a {
+      color: #007BFF;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="profile-card" id="profileCard">
+    <h2>Loading...</h2>
+  </div>
+
+  <script>
+    function getSlug() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("slug");
+    }
+
+    async function fetchModel() {
+      const slug = getSlug();
+      if (!slug) {
+        document.getElementById('profileCard').innerHTML = "<p>❌ No slug provided.</p>";
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/api/models/${slug}`);
+        if (!res.ok) throw new Error("Model not found");
+
+        const model = await res.json();
+
+        document.getElementById('profileCard').innerHTML = `
+          <h2>${model.name}</h2>
+          <p><strong>Type:</strong> ${model.model_type}</p>
+          <p><strong>Gender:</strong> ${model.gender}</p>
+          <p><strong>City:</strong> ${model.city}</p>
+          <p><strong>Price:</strong> $${model.price}</p>
+          <div class="social-link">
+            ${model.youtube ? `📺 <a href="${model.youtube}" target="_blank">YouTube</a><br>` : ''}
+            ${model.instagram ? `📸 <a href="${model.instagram}" target="_blank">Instagram</a><br>` : ''}
+            ${model.tiktok ? `🎵 <a href="${model.tiktok}" target="_blank">TikTok</a><br>` : ''}
+          </div>
+          <br><a href="index.html">← Back to all models</a>
+        `;
+      } catch (err) {
+        document.getElementById('profileCard').innerHTML = "<p>❌ Model not found.</p>";
+      }
+    }
+
+    window.onload = fetchModel;
+  </script>
+
+</body>
+</html>

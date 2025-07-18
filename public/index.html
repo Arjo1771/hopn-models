@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>HOPn Models</title>
+  <style>
+    body {
+      font-family: Arial;
+      margin: 20px;
+      background: #f0f0f0;
+    }
+
+    .section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+
+    .model-card {
+      padding: 10px;
+      border: 1px solid #ddd;
+      margin: 10px 0;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+
+    .model-card h4 {
+      margin: 0 0 5px 0;
+    }
+
+    input, select, button, textarea {
+      margin: 5px 0;
+      padding: 8px;
+      font-size: 14px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    #bookingModal {
+      display: none;
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 400px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      z-index: 100;
+    }
+
+    #bookingModal button {
+      margin-top: 10px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .button-row button {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>📸 All Model Profiles</h2>
+
+  <div class="section">
+    <h4>🔍 Filter Models</h4>
+    <input type="text" id="filterCity" placeholder="City">
+    <input type="text" id="filterGender" placeholder="Gender">
+    <input type="text" id="filterType" placeholder="Model Type">
+    <input type="number" id="filterMin" placeholder="Min Price">
+    <input type="number" id="filterMax" placeholder="Max Price">
+    <button onclick="fetchModels()">Search</button>
+  </div>
+
+  <div class="section">
+    <div id="modelsContainer"></div>
+  </div>
+
+  <!-- 🔽 Booking Modal -->
+  <div id="bookingModal">
+    <h3>📅 Book Model</h3>
+    <form id="bookingForm">
+      <input type="hidden" name="model_profile_id" id="modelId">
+      <label>Client Name</label>
+      <input type="text" name="client_name" required>
+      <label>Date</label>
+      <input type="date" name="date" required>
+      <label>Duration</label>
+      <input type="text" name="duration" placeholder="e.g. 2 hours" required>
+      <label>Notes</label>
+      <textarea name="notes" placeholder="Optional"></textarea>
+      <div class="button-row">
+        <button type="submit">Submit</button>
+        <button type="button" onclick="closeModal()">Cancel</button>
+      </div>
+      <div id="bookingMsg" style="margin-top:10px;"></div>
+    </form>
+  </div>
+
+  <script>
+    async function fetchModels() {
+      const gender = document.getElementById('filterGender').value;
+      const city = document.getElementById('filterCity').value;
+      const type = document.getElementById('filterType').value;
+      const min = document.getElementById('filterMin').value;
+      const max = document.getElementById('filterMax').value;
+
+      let url = 'http://127.0.0.1:8000/api/models?';
+      if (gender) url += `gender=${gender}&`;
+      if (city) url += `city=${city}&`;
+      if (type) url += `model_type=${type}&`;
+      if (min) url += `price_min=${min}&`;
+      if (max) url += `price_max=${max}`;
+
+      const res = await fetch(url);
+      const models = await res.json();
+
+      const container = document.getElementById('modelsContainer');
+      container.innerHTML = "";
+
+      if (models.length === 0) {
+        container.innerHTML = "<p>No models found.</p>";
+        return;
+      }
+
+      models.forEach(model => {
+        container.innerHTML += `
+          <div class="model-card">
+            <h4>${model.name} (${model.model_type})</h4>
+            <p>Gender: ${model.gender} | City: ${model.city} | $${model.price}</p>
+            ${model.youtube ? `<p>YouTube: <a href="${model.youtube}" target="_blank">${model.youtube}</a></p>` : ''}
+            <div class="button-row">
+              <button onclick="bookForm(${model.id}, '${model.name}')">Book</button>
+              <button onclick="viewProfile('${model.slug}')">View</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function bookForm(modelId, modelName) {
+      document.getElementById("modelId").value = modelId;
+      document.getElementById("bookingForm").reset();
+      document.getElementById("bookingMsg").textContent = "";
+      document.getElementById("bookingModal").style.display = "block";
+    }
+
+    function closeModal() {
+      document.getElementById("bookingModal").style.display = "none";
+    }
+
+    function viewProfile(slug) {
+      window.location.href = `model.html?slug=${slug}`;
+    }
+
+    document.getElementById("bookingForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const bookingMsg = document.getElementById("bookingMsg");
+
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/bookings', {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' },
+          body: formData
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          bookingMsg.style.color = "green";
+          bookingMsg.textContent = "✅ Booking submitted successfully!";
+          form.reset();
+        } else {
+          let err = "";
+          if (data.errors) {
+            for (let field in data.errors) {
+              err += data.errors[field][0] + "\n";
+            }
+          } else {
+            err = data.message || "Something went wrong.";
+          }
+          bookingMsg.style.color = "red";
+          bookingMsg.textContent = err;
+        }
+      } catch (error) {
+        bookingMsg.style.color = "red";
+        bookingMsg.textContent = "❌ Failed to connect to server.";
+      }
+    });
+
+    // Load models on page load
+    window.onload = fetchModels;
+  </script>
+
+</body>
+</html>

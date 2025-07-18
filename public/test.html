@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>HOPn Test</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 30px;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      display: block;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Create Model Profile</h2>
+    <form id="modelForm">
+      <input name="name" placeholder="Name" required>
+      <input name="gender" placeholder="Gender" required>
+      <input name="city" placeholder="City" required>
+      <input name="model_type" placeholder="Model Type" required>
+      <input name="price" type="number" placeholder="Price" required>
+      <input name="youtube" placeholder="YouTube URL">
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="messageBox" class="message"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('modelForm');
+    const messageBox = document.getElementById('messageBox');
+
+    form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  messageBox.style.display = 'none'; // reset
+
+  const formData = new FormData(form);
+
+  try {
+    const res = await fetch('http://127.0.0.1:8000/api/models', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json'
+      },
+      body: formData // ✅ this is the correct variable
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      messageBox.textContent = "✅ Profile created successfully!";
+      messageBox.className = 'message success';
+      messageBox.style.display = 'block';
+      form.reset();
+    } else {
+      let errors = "";
+      if (data.errors) {
+        for (const field in data.errors) {
+          errors += `${data.errors[field][0]}\n`;
+        }
+      } else {
+        errors = data.message || '❌ Something went wrong.';
+      }
+
+      messageBox.textContent = errors;
+      messageBox.className = 'message error';
+      messageBox.style.display = 'block';
+    }
+  } catch (err) {
+    messageBox.textContent = '❌ Failed to connect to server.';
+    messageBox.className = 'message error';
+    messageBox.style.display = 'block';
+  }
+});
+  </script>
+</body>
+</html>

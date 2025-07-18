@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard – HOPn</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      display: inline-block;
+      background: white;
+      padding: 30px;
+      margin: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 200px;
+      text-align: center;
+    }
+
+    .count {
+      font-size: 36px;
+      font-weight: bold;
+      color: #007bff;
+    }
+
+    .label {
+      font-size: 16px;
+      color: #333;
+    }
+
+    .logout-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .logout-btn:hover {
+      background-color: #c82333;
+    }
+
+    /* Booking section */
+    .booking-card {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+    }
+
+    .status-select {
+      margin-top: 10px;
+    }
+
+    select {
+      padding: 5px;
+    }
+
+    #bookingContainer {
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+
+  <button class="logout-btn" onclick="logout()">Logout</button>
+
+  <h2>📊 HOPn Admin Dashboard</h2>
+
+  <div class="card">
+    <div class="count" id="modelCount">–</div>
+    <div class="label">Models</div>
+  </div>
+
+  <div class="card">
+    <div class="count" id="bookingCount">–</div>
+    <div class="label">Bookings</div>
+  </div>
+
+  <div id="bookingContainer">
+    <h2>📋 All Booking Requests</h2>
+    <p>Loading...</p>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('admin_token');
+
+    if (!token) {
+      alert("🔒 You must log in first.");
+      window.location.href = 'admin-login.html';
+    }
+
+    async function loadDashboard() {
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/dashboard', {
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!res.ok) throw new Error("Unauthorized");
+
+        const data = await res.json();
+        document.getElementById('modelCount').textContent = data.total_models;
+        document.getElementById('bookingCount').textContent = data.total_bookings;
+      } catch (err) {
+        alert('❌ Failed to load dashboard. Redirecting to login.');
+        localStorage.removeItem('admin_token');
+        window.location.href = 'admin-login.html';
+      }
+    }
+
+    async function fetchBookings() {
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/bookings', {
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        const bookings = await res.json();
+        const container = document.getElementById('bookingContainer');
+        container.innerHTML = "<h2>📋 All Booking Requests</h2>";
+
+        if (bookings.length === 0) {
+          container.innerHTML += "<p>No bookings found.</p>";
+          return;
+        }
+
+        bookings.forEach(b => {
+          const modelName = b.model_profile?.name || 'Unknown Model';
+          container.innerHTML += `
+            <div class="booking-card">
+              <strong>📸 Model:</strong> ${modelName}<br>
+              <strong>👤 Client:</strong> ${b.client_name}<br>
+              <strong>📅 Date:</strong> ${b.date}<br>
+              <strong>⏱️ Duration:</strong> ${b.duration}<br>
+              <strong>📝 Notes:</strong> ${b.notes || '-'}<br>
+              <strong>🚦 Status:</strong> <span id="status-${b.id}">${b.status}</span><br>
+              <div class="status-select">
+                <select onchange="updateStatus(${b.id}, this.value)">
+                  <option value="">Change Status</option>
+                  <option value="approved">Approve</option>
+                  <option value="rejected">Reject</option>
+                </select>
+              </div>
+            </div>
+          `;
+        });
+      } catch (err) {
+        alert("❌ Failed to load bookings");
+      }
+    }
+
+    async function updateStatus(bookingId, newStatus) {
+      if (!newStatus) return;
+
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/api/bookings/${bookingId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          document.getElementById(`status-${bookingId}`).textContent = result.status;
+          alert('✅ Status updated');
+        } else {
+          alert('❌ Failed to update: ' + (result.message || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('❌ Connection error');
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('admin_token');
+      window.location.href = 'admin-login.html';
+    }
+
+    window.onload = () => {
+      loadDashboard();
+      fetchBookings();
+    };
+  </script>
+
+</body>
+</html>
