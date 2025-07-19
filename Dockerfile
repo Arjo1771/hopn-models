@@ -1,14 +1,28 @@
-FROM richarvey/nginx-php-fpm:3.1.6
+FROM php:8.2-cli
 
+# Install system dependencies
+RUN apt-get update && apt-get install -y unzip git curl libzip-dev libpng-dev libonig-dev zip
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo pdo_mysql zip mbstring
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Set working directory
+WORKDIR /app
+
+# Copy everything
 COPY . .
 
-# ✅ Set correct permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader
 
-ENV SKIP_COMPOSER=1 \
-    WEBROOT=/var/www/html/public \
-    PHP_ERRORS_STDERR=1 \
-    RUN_SCRIPTS=1 \
-    COMPOSER_ALLOW_SUPERUSER=1
+# Set correct permissions
+RUN chmod -R 775 storage bootstrap/cache
 
-CMD ["/start.sh"]
+# Expose port
+EXPOSE 10000
+
+# Start Laravel app
+CMD php artisan serve --host=0.0.0.0 --port=10000
