@@ -19,7 +19,7 @@ class AdminSeeder extends Seeder
             [
                 'name' => 'Super Admin',
                 'password' => Hash::make('password123'),
-                'uid' => Str::uuid(),
+                //'uid' => Str::uuid(),
             ]
         );
     }
