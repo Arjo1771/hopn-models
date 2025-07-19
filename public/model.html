@@ -56,7 +56,7 @@
       }
 
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/models/${slug}`);
+        const res = await fetch(`https://hopn-models.onrender.com/api/models/${slug}`);
         if (!res.ok) throw new Error("Model not found");
 
         const model = await res.json();

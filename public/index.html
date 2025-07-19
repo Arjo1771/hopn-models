@@ -114,7 +114,7 @@
       const min = document.getElementById('filterMin').value;
       const max = document.getElementById('filterMax').value;
 
-      let url = 'http://127.0.0.1:8000/api/models?';
+      let url = 'https://hopn-models.onrender.com/api/models?';
       if (gender) url += `gender=${gender}&`;
       if (city) url += `city=${city}&`;
       if (type) url += `model_type=${type}&`;
@@ -169,7 +169,7 @@
       const bookingMsg = document.getElementById("bookingMsg");
 
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/bookings', {
+        const res = await fetch('https://hopn-models.onrender.com/api/bookings', {
           method: 'POST',
           headers: { 'Accept': 'application/json' },
           body: formData

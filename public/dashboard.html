@@ -106,7 +106,7 @@
 
     async function loadDashboard() {
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/dashboard', {
+        const res = await fetch('https://hopn-models.onrender.com/api/dashboard', {
           headers: {
             'Authorization': 'Bearer ' + token,
             'Accept': 'application/json'
@@ -127,7 +127,7 @@
 
     async function fetchBookings() {
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/bookings', {
+        const res = await fetch('https://hopn-models.onrender.com/api/bookings', {
           headers: {
             'Accept': 'application/json'
           }
@@ -171,7 +171,7 @@
       if (!newStatus) return;
 
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/bookings/${bookingId}`, {
+        const res = await fetch(`https://hopn-models.onrender.com/api/bookings/${bookingId}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',

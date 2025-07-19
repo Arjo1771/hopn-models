@@ -40,7 +40,7 @@
 
   <script>
     async function fetchBookings() {
-      const res = await fetch('http://127.0.0.1:8000/api/bookings');
+      const res = await fetch('https://hopn-models.onrender.com/api/bookings');
       const bookings = await res.json();
 
       const container = document.getElementById('bookingContainer');
@@ -78,7 +78,7 @@
       if (!newStatus) return;
 
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/bookings/${bookingId}`, {
+        const res = await fetch(`https://hopn-models.onrender.com/api/bookings/${bookingId}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
